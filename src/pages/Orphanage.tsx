@@ -33,6 +33,7 @@ export default function Orphanage() {
   const { goBack } = useHistory()
   const params = useParams<OrphanangeParams>()
   const [orphanange, setOrphanange] = useState<Orphanange>()
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
 
   // Sempre que usar uma variavel dentro da URL, tem que passar essa variavel, no array
   // de dependências, no final do useEffect
@@ -53,12 +54,17 @@ export default function Orphanage() {
 
       <main>
         <div className="orphanage-details">
-          <img src={orphanange.images[0].url} alt={orphanange.name} />
+          <img src={orphanange.images[activeImageIndex].url} alt={orphanange.name} />
 
           <div className="images">
-            { orphanange.images.map(image => {
+            { orphanange.images.map((image, index) => {
               return (
-                <button key={image.id} className="active" type="button">  
+                <button 
+                  key={image.id} 
+                  className={activeImageIndex === index ? 'active' : ''} 
+                  type="button"
+                  onClick={() => {setActiveImageIndex(index)}}
+                  >  
                   <img src={image.url} alt={orphanange.name} />
                 </button>
               )
