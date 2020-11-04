@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from "react"
+import React, { useState, FormEvent, ChangeEvent } from "react"
 import { Map, Marker, TileLayer } from 'react-leaflet'
 import { LeafletMouseEvent } from 'leaflet'
 
@@ -8,13 +8,19 @@ import { FiPlus } from "react-icons/fi"
 import '../styles/pages/create-orphanage.css'
 import Sidebar from "../components/Sidebar"
 import mapIcon from "../utils/mapIcon"
+import api from "../services/api"
+import { useHistory } from "react-router-dom"
 
 export default function CreateOrphanage() {
+  const history = useHistory()
+
   const [name, setName] = useState('')
   const [about, setAbout] = useState('')
   const [instructions, setInstructions] = useState('')
   const [opening_hours, setOpeningHours] = useState('')
   const [open_on_weekends, setOpenOnWeekends] = useState(true)
+  const [images, setImages] = useState<File[]>([])
+  const [previewImages, setPreviewImages] = useState<string[]>([])
 
   const [position, setPosition] = useState({ latitude: 0, longitude: 0 })
 
@@ -27,20 +33,46 @@ export default function CreateOrphanage() {
     })
   }
 
-  function handleSubmit(event: FormEvent){
+ async function handleSubmit(event: FormEvent){
     event.preventDefault()
 
     const { latitude, longitude } = position
 
-    console.log(
-      name,
-      latitude,
-      longitude,
-      about,
-      instructions, 
-      opening_hours,
-      open_on_weekends
-    )
+    const data = new FormData()
+
+    data.append('name', name)
+    data.append('latitude', String(latitude))
+    data.append('longitude', String(longitude))
+    data.append('about', about)
+    data.append('instructions', instructions)
+    data.append('opening_hours', opening_hours)
+    data.append('open_on_weekends', String(open_on_weekends))
+
+    images.forEach(image => {
+      data.append('images', image)
+    })
+
+    await api.post('orphananges', data)
+
+    alert('Cadastro realizado com sucesso')
+
+    history.push('/app')
+  }
+
+  function handleSelectImage(event: ChangeEvent<HTMLInputElement>){
+    if (!event.target.files) {
+      return 
+    }
+
+    const selectedImages = Array.from(event.target.files)
+
+    setImages(selectedImages)
+
+    const selectedImagesPreview = selectedImages.map(image => {
+      return URL.createObjectURL(image)
+    })
+    
+    setPreviewImages(selectedImagesPreview)
   }
 
   return (
@@ -92,13 +124,20 @@ export default function CreateOrphanage() {
             <div className="input-block">
               <label htmlFor="images">Fotos</label>
 
-              <div className="uploaded-image">
+              <div className="images-container">
+                { previewImages.map(image => {
+                  return (
+                    <img key={image} src={image} alt={name} />
+                  )
+                })}
+
+                <label htmlFor="image[]" className="new-image">
+                  <FiPlus size={24} color="#15b6d6" />
+                </label>
 
               </div>
+              <input multiple onChange={handleSelectImage} type="file" id="image[]" />
 
-              <button type="button" className="new-image">
-                <FiPlus size={24} color="#15b6d6" />
-              </button>
             </div>
           </fieldset>
 
